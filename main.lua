@@ -17,7 +17,7 @@
 --
 -- Requirements:
 --   • 	A compatible Chinese dictionary (CEDICT recommended). 
---		Set the path to the stardict files on line 196.
+--		Set the path to the stardict files on line 210 (including file name, without file extension).
 -- 	  	looks like: local dict_base = "/mnt/onboard/.adds/koreader/plugins/chinese.koplugin/cedict"
 --		You can also just use the path to an existing Stardict dictionary (koreader/data/dict).
 --
@@ -189,30 +189,52 @@ function Chinese:init()
 end
 
 
+-- Module-level cache (shared across plugin reloads in same KOReader run)
+local cached_words = nil
+local cached_wordset = nil
+local cached_ready = false
+
 function Chinese:_try_load_lexicon()
+    if cached_ready and cached_words and cached_wordset then
+        -- reuse cache
+        self.words = cached_words
+        self.wordset = cached_wordset
+        self.lex_ready = true
+        logger.info("Chinese: reused cached StarDict lexicon (" .. #self.words .. " headwords)")
+        return
+    end
+
     self.lex_ready = false
     self.words, self.wordset = nil, nil
 
-	local dict_base = "/mnt/onboard/.adds/koreader/plugins/chinese.koplugin/cedict"
+    local dict_base = "/mnt/onboard/.adds/koreader/plugins/chinese.koplugin/cedict"
     local ifo = dict_base .. ".ifo"
     local idx = dict_base .. ".idx"
 
     local info, err = parse_ifo(ifo)
     if not info then
-        logger.warn("Chinese: CEDICT .ifo not found/invalid at same folder: " .. tostring(err))
+        logger.warn("Chinese: CEDICT .ifo not found/invalid: " .. tostring(err))
         return
     end
     local words, err2 = load_headwords_from_idx(idx, info.idxoffsetbits or 32)
     if not words then
-        logger.warn("Chinese: CEDICT .idx not found/invalid at same folder: " .. tostring(err2))
+        logger.warn("Chinese: CEDICT .idx not found/invalid: " .. tostring(err2))
         return
     end
 
+    local wordset = build_set(words)
     self.words = words
-    self.wordset = build_set(words)
+    self.wordset = wordset
     self.lex_ready = true
-    logger.info(string.format("Chinese: StarDict lexicon loaded (%d headwords)", #words))
+
+    -- populate cache
+    cached_words = words
+    cached_wordset = wordset
+    cached_ready = true
+
+    logger.info(string.format("Chinese: StarDict lexicon loaded and cached (%d headwords)", #words))
 end
+
 
 -- Presence checks
 function Chinese:lex_has_word(s)

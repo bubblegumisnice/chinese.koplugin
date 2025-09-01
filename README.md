@@ -13,8 +13,7 @@ with final display handled through KOReader’s built-in dictionary system.
 - Extends KOReader’s dictionary and text selection system to support Chinese.  
 - Performs efficient scanning and longest-match word lookup.  
 - Integrates seamlessly with KOReader’s built-in dictionary display system.  
-- Adds an option under **Document → Language support plugins → Chinese** where the lexicon can be toggled on/off.  
-  - Turn it **off** for English books to reduce startup time when opening them.  
+- Adds an option under **Document → Language support plugins → Chinese** where the lexicon can be toggled on/off without disabling the plugin fully.  
 
 ---
 
@@ -28,7 +27,7 @@ with final display handled through KOReader’s built-in dictionary system.
 1. Copy this plugin to:  
    `frontend/apps/plugins/chinese.koplugin/`
 2. Ensure that the required dictionary files (`*.ifo` and `*.idx`) are present.  
-3. Edit `main.lua` and specify the dictionary path on **line 196**.  
+3. Edit `main.lua` to specify the dictionary path on **line 210** (including the dictionary filename without the file extension).  
 4. Restart KOReader.  
 
 ---
